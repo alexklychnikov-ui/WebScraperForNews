@@ -1,5 +1,7 @@
 # Web-скрапер новостей с AI-суммаризацией
 
+![Автоматический сбор новостей NODEX](Docs/Автоматический%20сбор%20новостей%20NODEX.png)
+
 Локальный пайплайн: сбор новостей (RSS / HTML / Telegram `t.me/s`) → фильтр по темам → AI-summary → HTML-дайджест на почту.
 
 ## Стек
@@ -74,6 +76,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\register_daily_task.ps1
 
 ## Документация (`Docs/`)
 
+- [Docs/Автоматический сбор новостей NODEX.png](Docs/Автоматический%20сбор%20новостей%20NODEX.png) — мокап / обложка
 - [Docs/INSTALL.md](Docs/INSTALL.md) — установка, `.env`, SMTP, ограничения
 - [Docs/TZ_WebScraperForNews.docx](Docs/TZ_WebScraperForNews.docx) — техническое задание
 - [Docs/visual.md](Docs/visual.md) — бриф демо-ролика
