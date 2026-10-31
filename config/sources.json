@@ -1,0 +1,90 @@
+{
+  "digest": {
+    "timezone": "Asia/Shanghai",
+    "schedule_hour": 8,
+    "lookback_hours": 24,
+    "max_candidates": 30,
+    "max_articles": 10,
+    "max_per_source": 15,
+    "language": "ru",
+    "summary_style": "2-3 фактических предложения без домыслов и Markdown"
+  },
+  "proxy": {
+    "mode": "auto",
+    "url": "socks5h://127.0.0.1:12335",
+    "timeout_seconds": 15
+  },
+  "topics": [
+    {
+      "id": "ai",
+      "name": "Искусственный интеллект",
+      "keywords": ["openai", "llm", "нейросеть", "chatgpt", "gpt", "claude", "gemini"]
+    },
+    {
+      "id": "industry",
+      "name": "Отрасль",
+      "keywords": ["startup", "funding", "рынок", "acquisition", "ipo"]
+    }
+  ],
+  "sources": [
+    {
+      "id": "techcrunch",
+      "name": "TechCrunch",
+      "type": "rss",
+      "url": "https://techcrunch.com/feed/",
+      "enabled": true,
+      "topics": ["ai", "industry"],
+      "proxy_mode": "inherit"
+    },
+    {
+      "id": "verge",
+      "name": "The Verge",
+      "type": "rss",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "enabled": true,
+      "topics": ["ai", "industry"],
+      "proxy_mode": "inherit"
+    },
+    {
+      "id": "openai-blog",
+      "name": "OpenAI Blog",
+      "type": "rss",
+      "url": "https://openai.com/blog/rss.xml",
+      "enabled": true,
+      "topics": ["ai"],
+      "proxy_mode": "inherit"
+    },
+    {
+      "id": "hn-frontpage",
+      "name": "Hacker News Front",
+      "type": "html",
+      "url": "https://news.ycombinator.com/",
+      "enabled": true,
+      "topics": ["ai", "industry"],
+      "proxy_mode": "inherit",
+      "selectors": {
+        "item": "tr.athing",
+        "title": "span.titleline > a",
+        "link": "span.titleline > a"
+      }
+    },
+    {
+      "id": "tg-openai-news",
+      "name": "OpenAI News Telegram",
+      "type": "telegram",
+      "url": "https://t.me/s/OpenAINews",
+      "enabled": true,
+      "topics": ["ai"],
+      "proxy_mode": "auto"
+    },
+    {
+      "id": "tg-huggingface",
+      "name": "Hugging Face Telegram",
+      "type": "telegram",
+      "url": "https://t.me/s/huggingface",
+      "enabled": true,
+      "topics": ["ai"],
+      "proxy_mode": "auto"
+    }
+  ]
+}

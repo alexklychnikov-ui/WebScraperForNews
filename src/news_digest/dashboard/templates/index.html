@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section id="proxy">
+  <h2>Прокси</h2>
+  <p class="muted">
+    Режим <code>auto</code>: сначала прямой доступ, при ошибке — через SOCKS5.
+    <code>always</code> — всегда прокси. <code>off</code> — без прокси.
+    Env <code>HTTPS_PROXY</code> перекрывает URL из формы, если задан.
+  </p>
+  <form method="post" action="{{ url_for('update_proxy') }}" class="grid-2" style="margin-top:0.8rem">
+    <label>Режим
+      <select name="mode">
+        <option value="auto" {% if config.proxy.mode == 'auto' %}selected{% endif %}>auto (direct → proxy)</option>
+        <option value="always" {% if config.proxy.mode == 'always' %}selected{% endif %}>always</option>
+        <option value="off" {% if config.proxy.mode == 'off' %}selected{% endif %}>off</option>
+      </select>
+    </label>
+    <label>Timeout, сек
+      <input type="number" min="1" name="timeout_seconds" value="{{ config.proxy.timeout_seconds }}">
+    </label>
+    <label style="grid-column: 1 / -1">Proxy URL
+      <input name="url" value="{{ config.proxy.url }}" placeholder="socks5h://127.0.0.1:12335">
+    </label>
+    <div class="row">
+      <button type="submit">Сохранить прокси</button>
+    </div>
+  </form>
+
+  <form method="post" action="{{ url_for('probe_proxy_target') }}" class="row" style="margin-top:0.9rem">
+    <label style="flex:1; min-width:220px">Проверка URL
+      <input name="url" placeholder="https://techcrunch.com/feed/" value="https://example.com">
+    </label>
+    <button type="submit" class="secondary" style="margin-top:1.35rem">Проверить доступ</button>
+  </form>
+</section>
+
+{% if probe_result %}
+<section class="probe {% if probe_result.ok %}ok{% else %}bad{% endif %}">
+  <h2>Результат проверки</h2>
+  <p>
+    <strong>{{ probe_result.name }}</strong> —
+    {% if probe_result.ok %}OK через <code>{{ probe_result.used_via }}</code>, HTTP {{ probe_result.status_code }}
+    {% else %}FAIL: {{ probe_result.error }}{% endif %}
+  </p>
+  <p class="muted">effective mode: <code>{{ probe_result.effective_mode }}</code>, proxy: <code>{{ probe_result.proxy_url }}</code></p>
+  <ul>
+    {% for attempt in probe_result.attempts %}
+      <li>
+        <code>{{ attempt.via }}</code>:
+        {% if attempt.ok %}ok{% else %}fail{% endif %}
+        {% if attempt.status_code %} · HTTP {{ attempt.status_code }}{% endif %}
+        {% if attempt.elapsed_ms %} · {{ attempt.elapsed_ms }} ms{% endif %}
+        {% if attempt.error %} · {{ attempt.error }}{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  {% if probe_result.preview %}
+    <p class="muted">preview: {{ probe_result.preview }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section id="topics">
+  <h2>Темы и ключевые слова</h2>
+  <table>
+    <thead>
+      <tr><th>Тема</th><th>Keywords</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for topic in config.topics %}
+      <tr>
+        <td>
+          <strong>{{ topic.name }}</strong><br>
+          <span class="muted"><code>{{ topic.id }}</code></span>
+        </td>
+        <td>
+          {% for kw in topic.keywords %}<span class="pill">{{ kw }}</span>{% else %}<span class="muted">—</span>{% endfor %}
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('remove_topic', topic_id=topic.id) }}" onsubmit="return confirm('Удалить тему?')">
+            <button class="danger" type="submit">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="muted">Тем пока нет</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="{{ url_for('create_topic') }}" class="grid-2" style="margin-top:1rem">
+    <label>Название
+      <input name="name" required placeholder="Искусственный интеллект">
+    </label>
+    <label>ID (опционально)
+      <input name="id" placeholder="ai">
+    </label>
+    <label style="grid-column:1 / -1">Ключевые слова (через запятую)
+      <textarea name="keywords" placeholder="openai, llm, нейросеть"></textarea>
+    </label>
+    <div><button type="submit">Добавить / обновить тему</button></div>
+  </form>
+</section>
+
+<section id="sources">
+  <h2>Источники поиска</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Источник</th>
+        <th>Тип / прокси</th>
+        <th>Темы</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for source in config.sources %}
+      <tr>
+        <td>
+          <strong>{{ source.name }}</strong>
+          <span class="pill {% if source.enabled %}on{% else %}off{% endif %}">
+            {% if source.enabled %}on{% else %}off{% endif %}
+          </span>
+          <br>
+          <a class="muted" href="{{ source.url }}" target="_blank" rel="noreferrer">{{ source.url }}</a>
+        </td>
+        <td>
+          <code>{{ source.type }}</code><br>
+          <span class="muted">proxy: {{ source.proxy_mode }}</span>
+        </td>
+        <td>
+          {% for tid in source.topics %}
+            <span class="pill">{{ topic_map[tid].name if tid in topic_map else tid }}</span>
+          {% else %}
+            <span class="muted">—</span>
+          {% endfor %}
+        </td>
+        <td>
+          <div class="row">
+            <form method="post" action="{{ url_for('probe', source_id=source.id) }}">
+              <button class="secondary" type="submit">Проверить</button>
+            </form>
+            <form method="post" action="{{ url_for('toggle_source', source_id=source.id) }}">
+              <button class="secondary" type="submit">{% if source.enabled %}Выкл{% else %}Вкл{% endif %}</button>
+            </form>
+            <form method="post" action="{{ url_for('remove_source', source_id=source.id) }}" onsubmit="return confirm('Удалить источник?')">
+              <button class="danger" type="submit">Удалить</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">Источников пока нет</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="{{ url_for('create_source') }}" style="margin-top:1rem">
+    <div class="grid-2">
+      <label>Название
+        <input name="name" required placeholder="TechCrunch">
+      </label>
+      <label>ID (опционально)
+        <input name="id" placeholder="techcrunch">
+      </label>
+      <label>URL
+        <input name="url" required placeholder="https://techcrunch.com/feed/">
+      </label>
+      <label>Тип
+        <select name="type">
+          <option value="rss">rss</option>
+          <option value="html">html</option>
+          <option value="telegram">telegram (t.me/s)</option>
+        </select>
+      </label>
+      <label>Прокси для источника
+        <select name="proxy_mode">
+          <option value="inherit">inherit (глобальный)</option>
+          <option value="auto">auto</option>
+          <option value="always">always</option>
+          <option value="off">off</option>
+        </select>
+      </label>
+      <label>Включён
+        <div class="checks"><label><input type="checkbox" name="enabled" checked> enabled</label></div>
+      </label>
+    </div>
+    <label style="margin-top:0.8rem">Темы
+      <div class="checks">
+        {% for topic in config.topics %}
+          <label><input type="checkbox" name="topics" value="{{ topic.id }}"> {{ topic.name }}</label>
+        {% else %}
+          <span class="muted">Сначала добавь темы</span>
+        {% endfor %}
+      </div>
+    </label>
+    <div class="row" style="margin-top:0.9rem">
+      <button type="submit">Добавить / обновить источник</button>
+    </div>
+  </form>
+</section>
+
+{% endblock %}
